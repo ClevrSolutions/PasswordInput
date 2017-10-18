@@ -31,12 +31,13 @@ define([
     "dojo/html",
     "dojo/on",
     "dojo/_base/event",
+    "dojo/_base/kernel",
 
     "PasswordInput/lib/jquery-1.11.2",
     "PasswordInput/lib/popover",
     "PasswordInput/lib/validationLanguagePack",
     "dojo/text!PasswordInput/widget/template/PasswordInput.html"
-], function(declare, _WidgetBase, _TemplatedMixin, dom, dojoClass, dojoConstruct, dojoAttr, dojoArray, dojoLang, dojoQuery, dojoText, dojoHtml, dojoOn, dojoEvent, _jQuery, popover, validationTranslations, widgetTemplate) {
+], function(declare, _WidgetBase, _TemplatedMixin, dom, dojoClass, dojoConstruct, dojoAttr, dojoArray, dojoLang, dojoQuery, dojoText, dojoHtml, dojoOn, dojoEvent, dojoKernel, _jQuery, popover, validationTranslations, widgetTemplate) {
     "use strict";
 
     var _jQ = _jQuery.noConflict(true);
@@ -56,7 +57,7 @@ define([
             //logger.level(logger.DEBUG);
             logger.debug(this.id + ".constructor");
             this._handles = [];
-            this.translations = validationTranslations[dojo.locale];
+            this.translations = validationTranslations[dojoKernel.locale];
         },
 
         postCreate: function() {
@@ -124,16 +125,11 @@ define([
         _setupValidation: function() {
             dojoAttr.set(this.changePasswordButton, "disabled", "disabled");
             if (this.passwordConfigEntity !== '') {
-                mx.data.createXPathString({
-                    entity: this.passwordConfigEntity,
-                    callback: dojoLang.hitch(this, function(xpath, allMatched) {
-                        mx.data.get({
-                            xpath: xpath,
-                            callback: dojoLang.hitch(this, function(objs) {
-                                this._passwordConfig = objs[0];
-                                this._setupValidationRules();
-                            })
-                        });
+                mx.data.get({
+                    xpath: "//" + this.passwordConfigEntity,
+                    callback: dojoLang.hitch(this, function(objs) {
+                        this._passwordConfig = objs[0];
+                        this._setupValidationRules();
                     })
                 });
             } else {
@@ -258,9 +254,7 @@ define([
                             actionname: this.mfToExecute,
                             guids: [ this._contextObj.getGuid() ]
                         },
-                        store: {
-                            caller: this.mxform
-                        },
+                        origin: this.mxform,
                         callback: function(obj) {},
                         error: dojoLang.hitch(this, function(error) {
                             logger.error(this.id + ": An error occurred while executing microflow: " + error.message);
